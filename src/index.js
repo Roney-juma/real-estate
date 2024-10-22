@@ -2,12 +2,12 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io"); 
 const router = require("./routes/index");
-const logger = require('./middlewheres/logger');
+const logger = require('./middleware/logger');
 const mongoose = require("mongoose");
 require("dotenv").config();
 const cors = require("cors");
 
-const PORT = process.env.PORT || 3306;
+const PORT = process.env.PORT || 3700;
 mongoose.connect(process.env.MONGO_URI).then(() => {
   logger.info('Connected to MongoDB');
 })

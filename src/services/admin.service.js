@@ -1,4 +1,4 @@
-const AdminUser = require('../models/AdminUser');
+const AdminUser = require('../model/admins.model');
 const bcrypt = require('bcryptjs');
 
 const createAdminUser = async (adminUserData) => {

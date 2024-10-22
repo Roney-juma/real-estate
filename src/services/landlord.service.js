@@ -1,4 +1,4 @@
-const Landlord = require('../models/Landlord');
+const Landlord = require('../model/landlord.model');
 
 const createLandlord = async (landlordData) => {
   const landlord = new Landlord(landlordData);

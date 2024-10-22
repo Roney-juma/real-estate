@@ -1,4 +1,4 @@
-const adminUserService = require('../services/adminUserService');
+const adminUserService = require('../services/admin.service');
 
 const createAdminUser = async (req, res) => {
   try {
@@ -8,6 +8,15 @@ const createAdminUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// Get Admin Users
+const getAdminUsers = async (req, res) => {
+  try {
+    const adminUsers = await adminUserService.getAllAdminUsers();
+    res.status(200).json(adminUsers);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+      }
+    };
 
 const getAdminUserById = async (req, res) => {
   try {
@@ -51,6 +60,7 @@ const authenticateAdminUser = async (req, res) => {
 
 module.exports = {
   createAdminUser,
+  getAdminUsers,
   getAdminUserById,
   updateAdminUser,
   deleteAdminUser,
