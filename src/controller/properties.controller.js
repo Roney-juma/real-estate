@@ -1,4 +1,4 @@
-const apartmentService = require('../services');
+const apartmentService = require('../services/properties.service');
 
 const addApartment = async (req, res) => {
   try {
