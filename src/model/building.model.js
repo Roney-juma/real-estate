@@ -8,10 +8,29 @@ const buildingSchema = new Schema(
     {
         name: { type: String, required: true },
         street: { type: String, required: true },
-        city: { type: String, required: true},
-        area: {type: String, required: true}
-    }
+        city: { type: String, required: true },
+        area: { type: String, required: true },
+        country: { type: String }, 
+        numberOfUnits: { type: Number, default: 1 },
+        buildingType: { 
+            type: String, 
+            enum: ['residential', 'commercial', 'mixed'],
+            required: true 
+        },
+        owner: { type: Schema.Types.ObjectId, ref: 'Owner' },
+        manager: { type: Schema.Types.ObjectId, ref: 'User' },
+        amenities: { type: [String] },
+        yearBuilt: { type: Number },  
+        status: { 
+            type: String, 
+            enum: ['active', 'inactive', 'under construction'], 
+            default: 'active' 
+        },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now }
+    },
+    { timestamps: true }
+);
 
-)
 const Building = mongoose.model('Building', buildingSchema);
 module.exports = Building;
