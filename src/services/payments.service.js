@@ -1,5 +1,5 @@
 // paymentService.js
-const Payment = require('../models/Payment');
+const Payment = require('../model/payments.model');
 
 const createPayment = async (paymentData) => {
   const payment = new Payment(paymentData);

@@ -1,4 +1,4 @@
-const Apartment = require('../models/Apartment');
+const Apartment = require('../model/properties.model');
 const cache = require('memory-cache');
 
 const getTotalApartments = async () => {

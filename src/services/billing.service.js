@@ -1,4 +1,4 @@
-const UtilityBilling = require('../models/UtilityBilling');
+const UtilityBilling = require('../model/billing.model');
 
 const createUtilityBill = async (billData) => {
   const bill = new UtilityBilling(billData);
