@@ -1,5 +1,5 @@
 const AdminUser = require('../model/admins.model');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 const createAdminUser = async (adminUserData) => {
   const adminUser = new AdminUser(adminUserData);
