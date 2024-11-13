@@ -1,15 +1,15 @@
-const apartmentService = require('../services/properties.service');
+const propertyService = require('../services/properties.service');
 
-const addApartment = async (req, res) => {
+const addProperty = async (req, res) => {
   try {
-    const apartmentData = req.body;
+    const propertyData = req.body;
     
-    const result = await apartmentService.addNewApartment(apartmentData);
+    const result = await propertyService.addNewProperty(propertyData);
 
     return res.status(201).json({
-      message: 'Apartment added successfully',
-      newApartment: result.newApartment,
-      totalApartments: result.totalApartmentsAfter,
+      message: 'Property added successfully',
+      newProperty: result.newProperty,
+      totalPropertys: result.totalPropertysAfter,
       percentageChange: result.percentageChange,
     });
   } catch (error) {
@@ -18,58 +18,58 @@ const addApartment = async (req, res) => {
 };
 
 
-const getApartmentById = async (req, res) => {
+const getPropertyById = async (req, res) => {
   try {
-    const apartment = await apartmentService.getApartmentById(req.params.id);
-    if (!apartment) return res.status(404).json({ message: 'Apartment not found' });
-    res.json(apartment);
+    const Property = await propertyService.getPropertyById(req.params.id);
+    if (!Property) return res.status(404).json({ message: 'Property not found' });
+    res.json(Property);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const updateApartment = async (req, res) => {
+const updateProperty = async (req, res) => {
   try {
-    const apartment = await apartmentService.updateApartment(req.params.id, req.body);
-    if (!apartment) return res.status(404).json({ message: 'Apartment not found' });
-    res.json(apartment);
+    const Property = await propertyService.updateProperty(req.params.id, req.body);
+    if (!Property) return res.status(404).json({ message: 'Property not found' });
+    res.json(Property);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const deleteApartment = async (req, res) => {
+const deleteProperty = async (req, res) => {
   try {
-    await apartmentService.deleteApartment(req.params.id);
-    res.status(204).json({ message: 'Apartment deleted' });
+    await propertyService.deleteProperty(req.params.id);
+    res.status(204).json({ message: 'Property deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-const getAllApartments = async (req, res) => {
+const getAllPropertys = async (req, res) => {
   try {
-    const apartments = await apartmentService.getAllApartments();
-    res.json(apartments);
+    const property = await propertyService.getProperty();
+    res.json(property);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-const getApartmentsByLandlord = async (req, res) => {
+const getPropertysByLandlord = async (req, res) => {
     try {
       const landlordId = req.params.landlordId;
-      const apartments = await apartmentService.getApartmentsByLandlord(landlordId);
-      return res.status(200).json(apartments);
+      const Propertys = await propertyService.getPropertysByLandlord(landlordId);
+      return res.status(200).json(Propertys);
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
   };
 
 module.exports = {
-  addApartment,
-  getApartmentById,
-  updateApartment,
-  deleteApartment,
-  getAllApartments,
-  getApartmentsByLandlord
+  addProperty,
+  getPropertyById,
+  updateProperty,
+  deleteProperty,
+  getAllPropertys,
+  getPropertysByLandlord
 };

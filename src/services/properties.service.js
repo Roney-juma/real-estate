@@ -1,57 +1,63 @@
-const Apartment = require('../model/properties.model');
+const Property = require('../model/properties.model');
 const cache = require('memory-cache');
 
-const getTotalApartments = async () => {
+const getTotalPropertys = async () => {
 
-  let totalApartments = cache.get('totalApartments');
+  let totalPropertys = cache.get('totalPropertys');
   
-  if (totalApartments === null) {
+  if (totalPropertys === null) {
    
-    totalApartments = await Apartment.countDocuments();
+    totalPropertys = await Property.countDocuments();
     
-    cache.put('totalApartments', totalApartments, 36000);
+    cache.put('totalPropertys', totalPropertys, 36000);
   }
 
-  return totalApartments;
+  return totalPropertys;
 };
 
-const addNewApartment = async (apartmentData) => {
+const addNewProperty = async (propertyData) => {
   try {
-    const totalApartmentsBefore = await getTotalApartments();
+    const totalPropertysBefore = await getTotalPropertys();
+    const propertyCount = await Property.countDocuments();
+  const propertyNumber = `PR-${String(propertyCount + 1).padStart(4, '0')}`;
+  propertyData.propertyNumber = propertyNumber;
 
-    const newApartment = new Apartment(apartmentData);
-    await newApartment.save();
+    const newProperty = new Property(propertyData);
+    await newProperty.save();
 
-    cache.put('totalApartments', totalApartmentsBefore + 1, 3600000);
+    cache.put('totalPropertys', totalPropertysBefore + 1, 3600000);
 
-    const totalApartmentsAfter = totalApartmentsBefore + 1;
+    const totalPropertysAfter = totalPropertysBefore + 1;
 
     let percentageChange = 0;
-    if (totalApartmentsBefore > 0) {
-      percentageChange = ((totalApartmentsAfter - totalApartmentsBefore) / totalApartmentsBefore) * 100;
+    if (totalPropertysBefore > 0) {
+      percentageChange = ((totalPropertysAfter - totalPropertysBefore) / totalPropertysBefore) * 100;
     }
 
     return {
-      newApartment,
-      totalApartmentsAfter,
+      newProperty,
+      totalPropertysAfter,
       percentageChange: percentageChange.toFixed(2) + '%', // rounding to two decimal places
     };
   } catch (error) {
-    throw new Error('Error adding new apartment: ' + error.message);
+    throw new Error('Error adding new Property: ' + error.message);
   }
 };
 
 
-const getApartmentById = async (apartmentId) => {
-  return await Apartment.findById(apartmentId);
+const getPropertyById = async (PropertyId) => {
+  return await Property.findById(PropertyId);
+};
+const getProperty = async (PropertyId) => {
+  return await Property.find({});
 };
 
-const updateApartment = async (apartmentId, apartmentData) => {
-  return await Apartment.findByIdAndUpdate(apartmentId, apartmentData, { new: true });
+const updateProperty = async (PropertyId, PropertyData) => {
+  return await Property.findByIdAndUpdate(PropertyId, PropertyData, { new: true });
 };
 
-const deleteApartment = async (apartmentId) => {
-  return await Apartment.findByIdAndDelete(apartmentId);
+const deleteProperty = async (PropertyId) => {
+  return await Property.findByIdAndDelete(PropertyId);
 };
 
 const getPropertiesByLandlord = async (landlordId) => {
@@ -64,10 +70,11 @@ const getPropertiesByLandlord = async (landlordId) => {
 };
 
 module.exports = {
-  addNewApartment,
-  getTotalApartments,
-  getApartmentById,
-  updateApartment,
+  addNewProperty,
+  getTotalPropertys,
+  getProperty,
+  getPropertyById,
+  updateProperty,
   getPropertiesByLandlord,
-  deleteApartment,
+  deleteProperty,
 };

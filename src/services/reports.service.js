@@ -172,6 +172,39 @@ const getRentalIncomeReport = async (startDate, endDate) => {
       throw new Error('Error fetching tenant payment summary: ' + error.message);
     }
   };
+// Get Monthly Rent Payment Statistics
+const getMonthlyRentPaymentStatistics = async (year, month) => {
+  try {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    const payments = await Payment.find({
+      date: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    });
+
+    const totalPayments = payments.reduce((total, payment) => total + payment.amount, 0);
+    const pendingPayments = payments.filter(payment => payment.status === 'Pending')
+                                    .reduce((total, payment) => total + payment.amount, 0);
+    const completedPayments = totalPayments - pendingPayments;
+
+    const pendingPercentage = ((pendingPayments / totalPayments) * 100).toFixed(2);
+    const completedPercentage = ((completedPayments / totalPayments) * 100).toFixed(2);
+
+    return {
+      pendingPayments,
+      completedPayments,
+      pendingPercentage,
+      completedPercentage
+    };
+  } catch (error) {
+    return { message: 'Error fetching monthly rent payment stats', error };
+  }
+}
+
+
   module.exports = {
     getRentalIncomeReport,
     getTenantPaymentHistory,
@@ -181,4 +214,5 @@ const getRentalIncomeReport = async (startDate, endDate) => {
     getLeaseExpirationReport,
     getMonthlyRevenueReport,
     getTenantPaymentSummary,
+    getMonthlyRentPaymentStatistics
   }
