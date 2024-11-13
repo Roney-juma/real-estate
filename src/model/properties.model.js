@@ -11,7 +11,7 @@ const apartmentSchema = new mongoose.Schema({
   size: { type: Number, required: true },
   leaseStart: { type: Date },
   leaseEnd: { type: Date },
-  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant' },
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: false },
   landlordId: { type: mongoose.Schema.Types.ObjectId, ref: 'Landlord', required: true },
   utilitiesIncluded: { type: Boolean, default: false },
   petFriendly: { type: Boolean, default: false },
