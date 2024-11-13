@@ -29,9 +29,9 @@ const createTenant = async (tenantData) => {
         throw new Error('The property does not belong to the specified apartment');
       }
 
-      // Update the property's status to 'occupied' and link the tenant to the property
-      property.status = 'occupied'; // Change property status to 'occupied'
-      property.tenantId = tenant._id; // Link the tenant to the property
+      
+      property.status = 'occupied'; 
+      property.tenantId = tenant._id;
 
       // Save the updated property
       await property.save();
@@ -291,8 +291,13 @@ const addPayment = async (tenantId, paymentData) => {
   }
 };
 // Check outstanding balance for a tenant
-const checkOutstandingBalance = async (tenantId, totalRentDue) => {
+const checkOutstandingBalance = async (tenantId) => {
   try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+      }
+    const totalRentDue = tenant.rentAmount
     const totalPaid = await calculateTotalRentPaid(tenantId);
     const balanceDue = totalRentDue - totalPaid;
     return balanceDue;

@@ -9,6 +9,8 @@ router.post('/create', tenantController.createTenant);
 
 // Get all tenants
 router.get('/', tenantController.getAllTenants);
+router.get('/outstanding-payments', tenantController.getTenantsWithOutstandingPayments);
+router.get('/due-today', tenantController.getTenantsDueForPaymentToday);
 
 // Get tenant by ID
 router.get('/:id', tenantController.getTenantById);
@@ -27,6 +29,8 @@ router.get('/landlord/:landlordId', tenantController.getTenantsByLandlordId);
 
 // Search tenants based on query
 router.get('/search', tenantController.searchTenants);
+
+
 
 // Get tenants by payment status (e.g., "paid", "unpaid")
 router.get('/payment-status/:status', tenantController.getTenantsByPaymentStatus);
@@ -50,9 +54,6 @@ router.get('/:id/total-rent-paid', tenantController.calculateTotalRentPaid);
 router.get('/due-for-renewal', tenantController.getTenantsDueForRenewal);
 router.post('/:tenantId/payments', tenantController.addPayment);
 router.get('/:tenantId/outstanding-balance', tenantController.checkOutstandingBalance);
-router.get('/outstanding-payments', tenantController.getTenantsWithOutstandingPayments);
-router.get('/due-today', tenantController.getTenantsDueForPaymentToday);
-
 
 
 module.exports = router;
