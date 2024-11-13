@@ -16,10 +16,38 @@ const addBuilding = async (buildingData) => {
   };
 //    Get All Buildings
   
-  const getAllBuildings = async (filters = {}) => {
+const getAllBuildings = async (filters = {}) => {
+  try {
+    // Fetch the current number of buildings
+    const currentBuildingCount = await Building.countDocuments(filters);
+
+    // Fetch buildings from 5 minutes ago
+    const dateFiveMinutesAgo = new Date();
+    dateFiveMinutesAgo.setMinutes(dateFiveMinutesAgo.getMinutes() - 5); // Subtract 5 minutes from current time
+
+    const buildingsFiveMinutesAgo = await Building.find({
+      createdAt: { $lte: dateFiveMinutesAgo },
+      ...filters, // Apply any additional filters (if provided)
+    }).countDocuments();
+
+    // Calculate the percentage rate of change
+    const percentageChange = buildingsFiveMinutesAgo === 0
+      ? 0 // Avoid division by zero if no buildings were created 5 minutes ago
+      : ((currentBuildingCount - buildingsFiveMinutesAgo) / currentBuildingCount) * 100;
+
+    // Fetch the buildings based on the filters
     const buildings = await Building.find(filters);
-    return buildings;
-  };
+
+    return {
+      buildings,
+      percentageChange,
+      currentBuildingCount,
+      buildingsFiveMinutesAgo,
+    };
+  } catch (error) {
+    throw new Error(`Error retrieving buildings: ${error.message}`);
+  }
+};
 // Update a Building
   const updateBuilding = async (buildingId, updateData) => {
     const updatedBuilding = await Building.findByIdAndUpdate(buildingId, updateData, { new: true });

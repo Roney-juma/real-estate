@@ -51,29 +51,61 @@ const getPropertyById = async (propertyId) => {
 
 // Get all properties with pagination and optional filtering
 const getProperties = async (page = 1, limit = 10, filter = {}) => {
-  const skip = (page - 1) * limit;
-  const query = filter.status ? { status: filter.status } : {}; // Filter by status (vacant, occupied, etc.)
-  if (filter.minRent || filter.maxRent) {
-    query.rentAmount = {};
-    if (filter.minRent) query.rentAmount.$gte = filter.minRent;
-    if (filter.maxRent) query.rentAmount.$lte = filter.maxRent;
+  try {
+    const skip = (page - 1) * limit;
+
+    // Prepare query for filtering properties
+    const query = filter.status ? { status: filter.status } : {}; // Filter by status (vacant, occupied, etc.)
+
+    if (filter.minRent || filter.maxRent) {
+      query.rentAmount = {};
+      if (filter.minRent) query.rentAmount.$gte = filter.minRent;
+      if (filter.maxRent) query.rentAmount.$lte = filter.maxRent;
+    }
+
+    // Fetch the current number of properties based on the filters
+    const currentPropertyCount = await Property.countDocuments(query);
+
+    // Fetch properties from 5 minutes ago (or any other time window you prefer)
+    const dateFiveMinutesAgo = new Date();
+    dateFiveMinutesAgo.setMinutes(dateFiveMinutesAgo.getMinutes() - 5); // Subtract 5 minutes from current time
+    
+    const propertiesFiveMinutesAgo = await Property.find({
+      createdAt: { $lte: dateFiveMinutesAgo },
+      ...query, // Apply any additional filters
+    }).countDocuments();
+
+    // Calculate the percentage rate of change in the number of properties
+    const percentageChange = propertiesFiveMinutesAgo === 0
+      ? 0 // Avoid division by zero if no properties existed 5 minutes ago
+      : ((currentPropertyCount - propertiesFiveMinutesAgo) / propertiesFiveMinutesAgo) * 100;
+
+    // Fetch the properties with pagination
+    const properties = await Property.find(query)
+      .skip(skip)
+      .limit(limit)
+      .populate('buildingId', 'name street city area')
+      .populate('landlordId', 'name email')
+      .exec();
+
+    // Calculate the total number of properties for pagination
+    const totalProperties = await Property.countDocuments(query);
+
+    // Return the properties along with additional data (pagination and percentage change)
+    return {
+      totalProperties,
+      properties,
+      totalPages: Math.ceil(totalProperties / limit),
+      currentPage: page,
+      percentageChange,
+      currentPropertyCount,
+      propertiesFiveMinutesAgo,
+    };
+  } catch (error) {
+    throw new Error(`Error retrieving properties: ${error.message}`);
   }
-
-  const properties = await Property.find(query)
-    .skip(skip)
-    .limit(limit)
-    .populate('buildingId', 'name street city area')
-    .populate('landlordId', 'name email');
-
-  const totalProperties = await Property.countDocuments(query);
-
-  return {
-    totalProperties,
-    properties,
-    totalPages: Math.ceil(totalProperties / limit),
-    currentPage: page,
-  };
 };
+
 
 // Update property data
 const updateProperty = async (propertyId, propertyData) => {

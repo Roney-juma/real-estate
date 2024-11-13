@@ -64,10 +64,7 @@ const getAllProperties = async (req, res) => {
     );
 
     res.status(200).json({
-      totalProperties: result.totalProperties,
-      properties: result.properties,
-      totalPages: result.totalPages,
-      currentPage: result.currentPage,
+      result
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

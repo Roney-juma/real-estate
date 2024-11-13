@@ -53,12 +53,39 @@ const deleteTenant = async (tenantId) => {
 const getAllTenants = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
+
+    // Fetch the current number of tenants
+    const currentTenantCount = await Tenant.countDocuments();
+
+    // Fetch tenants from 1 month ago (you can adjust this to a different time frame if needed)
+    const dateOneMonthAgo = new Date();
+    dateOneMonthAgo.setMonth(dateOneMonthAgo.getMonth() - 1);
+
+    const dateFiveMinutesAgo = new Date();
+    dateFiveMinutesAgo.setMinutes(dateFiveMinutesAgo.getMinutes() - 5);
+
+    const tenantsOneMonthAgo = await Tenant.find({
+      createdAt: { $lte: dateFiveMinutesAgo }
+    }).countDocuments();
+
+    // Calculate the percentage rate of change
+    const percentageChange = currentTenantCount === 0
+      ? 0 // Avoid division by zero if no tenants currently
+      : ((currentTenantCount - tenantsOneMonthAgo) / currentTenantCount) * 100;
+
+    // Fetch current tenants for pagination
     const tenants = await Tenant.find({})
       .skip(skip)
       .limit(limit)
-      .populate('apartmentId')  // Populate the apartment details
+      .populate('apartmentId')
       .exec();
-    return tenants;
+
+    return {
+      tenants,
+      percentageChange,
+      currentTenantCount,
+      tenantsOneMonthAgo,
+    };
   } catch (error) {
     throw new Error(`Error retrieving tenants: ${error.message}`);
   }
