@@ -1,25 +1,253 @@
 const Tenant = require('../model/tenants.model');
 
 const createTenant = async (tenantData) => {
-  const tenant = new Tenant(tenantData);
-  await tenant.save();
-  return tenant;
+  try {
+    const tenant = new Tenant(tenantData);
+    await tenant.save();
+    // Populate apartmentId to get building details along with the tenant
+    const populatedTenant = await Tenant.findById(tenant._id).populate('apartmentId').exec();
+    return populatedTenant;
+  } catch (error) {
+    throw new Error(`Error creating tenant: ${error.message}`);
+  }
 };
 
 const getTenantById = async (tenantId) => {
-  return await Tenant.findById(tenantId);
+  try {
+    const tenant = await Tenant.findById(tenantId).populate('apartmentId').exec();
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    return tenant;
+  } catch (error) {
+    throw new Error(`Error retrieving tenant by ID: ${error.message}`);
+  }
 };
 
 const updateTenant = async (tenantId, tenantData) => {
-  return await Tenant.findByIdAndUpdate(tenantId, tenantData, { new: true });
+  try {
+    const updatedTenant = await Tenant.findByIdAndUpdate(tenantId, tenantData, { new: true })
+      .populate('apartmentId')  // Ensure apartmentId is populated after update
+      .exec();
+    if (!updatedTenant) {
+      throw new Error('Tenant not found');
+    }
+    return updatedTenant;
+  } catch (error) {
+    throw new Error(`Error updating tenant: ${error.message}`);
+  }
 };
 
 const deleteTenant = async (tenantId) => {
-  return await Tenant.findByIdAndDelete(tenantId);
+  try {
+    const deletedTenant = await Tenant.findByIdAndDelete(tenantId);
+    if (!deletedTenant) {
+      throw new Error('Tenant not found');
+    }
+    return deletedTenant;
+  } catch (error) {
+    throw new Error(`Error deleting tenant: ${error.message}`);
+  }
 };
 
-const getAllTenants = async () => {
-  return await Tenant.find({});
+const getAllTenants = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+    const tenants = await Tenant.find({})
+      .skip(skip)
+      .limit(limit)
+      .populate('apartmentId')  // Populate the apartment details
+      .exec();
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants: ${error.message}`);
+  }
+};
+
+const getTenantsByApartmentId = async (apartmentId) => {
+  try {
+    const tenants = await Tenant.find({ apartmentId })
+      .populate('apartmentId') // Populate apartment details
+      .exec();
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants by apartment ID: ${error.message}`);
+  }
+};
+
+const getTenantsByLandlordId = async (landlordId) => {
+  try {
+    const tenants = await Tenant.find({ landlordId })
+      .populate('apartmentId')  // You can also populate other details like landlord, apartment
+      .exec();
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants by landlord ID: ${error.message}`);
+  }
+};
+
+const searchTenants = async (searchQuery) => {
+  try {
+    const tenants = await Tenant.find({
+      $or: [
+        { fullName: { $regex: searchQuery, $options: 'i' } },
+        { email: { $regex: searchQuery, $options: 'i' } }
+      ]
+    }).populate('apartmentId')
+      .exec();
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error searching tenants: ${error.message}`);
+  }
+};
+
+const getTenantsByPaymentStatus = async (status) => {
+  try {
+    const tenants = await Tenant.find({
+      'paymentHistory.status': status
+    }).populate('apartmentId')  // Populate the apartmentId if needed
+      .exec();
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants by payment status: ${error.message}`);
+  }
+};
+
+const updatePaymentHistory = async (tenantId, paymentData) => {
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    
+    tenant.paymentHistory.push(paymentData); // Add new payment record
+    await tenant.save();
+    return tenant;
+  } catch (error) {
+    throw new Error(`Error updating payment history: ${error.message}`);
+  }
+};
+
+const updateTenantStatus = async (tenantId, status) => {
+  try {
+    const tenant = await Tenant.findByIdAndUpdate(
+      tenantId,
+      { status },
+      { new: true }
+    ).populate('apartmentId') // You can populate relevant fields if needed
+      .exec();
+    
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    return tenant;
+  } catch (error) {
+    throw new Error(`Error updating tenant status: ${error.message}`);
+  }
+};
+
+const getPaymentHistory = async (tenantId) => {
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    return tenant.paymentHistory;  // Return the payment history array
+  } catch (error) {
+    throw new Error(`Error retrieving payment history: ${error.message}`);
+  }
+};
+
+const checkRentDue = async (tenantId) => {
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    
+    // Check if rent is due (assuming rentDueDate is a number representing the day of the month)
+    const today = new Date().getDate();
+    const isDue = tenant.rentDueDate === today;
+    return isDue;
+  } catch (error) {
+    throw new Error(`Error checking rent due: ${error.message}`);
+  }
+};
+
+const calculateTotalRentPaid = async (tenantId) => {
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    
+    const totalPaid = tenant.paymentHistory.reduce((acc, payment) => acc + (payment.amount || 0), 0);
+    return totalPaid;
+  } catch (error) {
+    throw new Error(`Error calculating total rent paid: ${error.message}`);
+  }
+};
+
+const getTenantsDueForRenewal = async () => {
+  try {
+    const today = new Date();
+    const tenants = await Tenant.find({
+      leaseEnd: { $lte: today }
+    }).populate('apartmentId')  // Populate apartment details if needed
+      .exec();
+    
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants due for lease renewal: ${error.message}`);
+  }
+};
+// Create a new payment for a tenant
+const addPayment = async (tenantId, paymentData) => {
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+    
+    tenant.paymentHistory.push(paymentData); // Add new payment to tenant's payment history
+    await tenant.save();
+    
+    return tenant;
+  } catch (error) {
+    throw new Error(`Error creating payment: ${error.message}`);
+  }
+};
+// Check outstanding balance for a tenant
+const checkOutstandingBalance = async (tenantId, totalRentDue) => {
+  try {
+    const totalPaid = await calculateTotalRentPaid(tenantId);
+    const balanceDue = totalRentDue - totalPaid;
+    return balanceDue;
+  } catch (error) {
+    throw new Error(`Error checking outstanding balance: ${error.message}`);
+  }
+};
+// Get tenants with outstanding payments
+const getTenantsWithOutstandingPayments = async () => {
+  try {
+    const tenants = await Tenant.find({
+      "paymentHistory.status": { $ne: "paid" }
+    }).populate('apartmentId');
+    return tenants;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants with outstanding payments: ${error.message}`);
+  }
+};
+
+// Get tenants due for payment today
+const getTenantsDueForPaymentToday = async () => {
+  try {
+    const today = new Date().getDate();
+    const tenantsDueToday = await Tenant.find({ rentDueDate: today }).populate('apartmentId');
+    return tenantsDueToday;
+  } catch (error) {
+    throw new Error(`Error retrieving tenants due for payment today: ${error.message}`);
+  }
 };
 
 module.exports = {
@@ -27,5 +255,19 @@ module.exports = {
   getTenantById,
   updateTenant,
   deleteTenant,
-  getAllTenants
+  getAllTenants,
+  getTenantsByApartmentId,
+  getTenantsByLandlordId,
+  searchTenants,
+  getTenantsByPaymentStatus,
+  updatePaymentHistory,
+  updateTenantStatus,
+  getPaymentHistory,
+  checkRentDue,
+  calculateTotalRentPaid,
+  getTenantsDueForRenewal,
+  addPayment,
+  checkOutstandingBalance,
+  getTenantsWithOutstandingPayments,
+  getTenantsDueForPaymentToday,
 };
