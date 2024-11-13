@@ -6,6 +6,7 @@ const tenantSchema = new mongoose.Schema({
     phone: { type: String, required: true },
     employer: { type: String, required: false }, // Optional
     apartmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Building' },
+    propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: false},
     leaseStart: { type: Date, required: false }, // Optional
     leaseEnd: { type: Date, required: false },   // Optional
     rentDueDate: { type: Number, required: true }, // The day of the month rent is due (e.g., 1st, 15th)

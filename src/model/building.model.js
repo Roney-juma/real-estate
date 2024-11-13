@@ -20,6 +20,7 @@ const buildingSchema = new Schema(
         owner: { type: Schema.Types.ObjectId, ref: 'Owner' },
         manager: { type: Schema.Types.ObjectId, ref: 'User' },
         amenities: { type: [String] },
+        properties: [{ type: Schema.Types.ObjectId, ref: 'Property' }],
         yearBuilt: { type: Number },  
         status: { 
             type: String, 

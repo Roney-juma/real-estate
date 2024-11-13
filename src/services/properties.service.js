@@ -149,13 +149,21 @@ const getPropertiesByLandlord = async (landlordId) => {
 // Get properties by status (vacant, occupied, etc.)
 const getPropertiesByStatus = async (status) => {
   try {
-    return await Property.find({ status })
+    // Fetch properties by status
+    const properties = await Property.find({ status })
       .populate('buildingId', 'name street city area')
       .populate('landlordId', 'name email');
+    
+    // Count the total number of properties with the given status
+    const totalProperties = await Property.countDocuments({ status });
+
+    // Return both the properties and the count
+    return { properties, totalProperties };
   } catch (error) {
     throw new Error(`Error fetching ${status} properties: ` + error.message);
   }
 };
+
 
 // Get properties within a specific rent range
 const getPropertiesByRentRange = async (minRent, maxRent) => {

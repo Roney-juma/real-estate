@@ -1,11 +1,57 @@
 const Tenant = require('../model/tenants.model');
-
+const Building = require('../model/building.model')
+const Property = require('../model/properties.model')
 const createTenant = async (tenantData) => {
   try {
+    // Create the tenant using the provided data
     const tenant = new Tenant(tenantData);
+
+    // Save the tenant
     await tenant.save();
-    // Populate apartmentId to get building details along with the tenant
-    const populatedTenant = await Tenant.findById(tenant._id).populate('apartmentId').exec();
+
+    // Check if the tenant's apartmentId and propertyId are provided
+    if (tenantData.apartmentId && tenantData.propertyId) {
+      // Find the apartment and the specific property
+      const apartment = await Building.findById(tenantData.apartmentId);
+      const property = await Property.findById(tenantData.propertyId);
+
+      // Ensure the apartment and property exist
+      if (!apartment) {
+        throw new Error('Apartment not found');
+      }
+
+      if (!property) {
+        throw new Error('Property not found');
+      }
+
+      // Check if the property belongs to the specified apartment
+      if (!apartment.properties.includes(property._id)) {
+        throw new Error('The property does not belong to the specified apartment');
+      }
+
+      // Update the property's status to 'occupied' and link the tenant to the property
+      property.status = 'occupied'; // Change property status to 'occupied'
+      property.tenantId = tenant._id; // Link the tenant to the property
+
+      // Save the updated property
+      await property.save();
+
+      // Optionally, you can also update the apartment or other related data as necessary
+      // For example, you could check if the apartment has any other available properties
+      const availableProperties = apartment.properties.filter(
+        (propertyId) => propertyId !== property._id && property.status !== 'occupied'
+      );
+
+      // Save the updated apartment if necessary (e.g., update the availability status)
+      await apartment.save();
+    }
+
+    // Populate apartmentId and propertyId to get apartment and building details along with the tenant
+    const populatedTenant = await Tenant.findById(tenant._id)
+      .populate('apartmentId')
+      .populate('propertyId')
+      .exec();
+
     return populatedTenant;
   } catch (error) {
     throw new Error(`Error creating tenant: ${error.message}`);
