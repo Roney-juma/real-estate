@@ -6,9 +6,10 @@ const landlordSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
+  emergency:{type: Object, required: false},
   address: { type: String, required: true },
   paymentDetails: { type: Object, required: true },
-  apartments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Building' }],
+  building: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Building' }],
   propertiesOwned: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property' }],
   identification: {
     type: String,

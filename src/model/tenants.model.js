@@ -17,7 +17,8 @@ const tenantSchema = new mongoose.Schema({
       status: { type: String, enum: ['completed', 'pending', 'failed'], default: 'pending' },
       paymentMethod: { type: String, enum: ['creditCard', 'bankTransfer', 'cash'], required: false }
     }],
-    status: { type: String, enum: ['active', 'inactive', 'evicted'], default: 'active' }, // Tenant Status
+    status: { type: String, enum: ['active', 'inactive', 'evicted'], default: 'active' },
+    totalDue: { type: Number, default: 0 },  // Track outstanding balance
     address: { 
       street: { type: String, required: true },
       city: { type: String, required: true },

@@ -1,6 +1,7 @@
 const Tenant = require('../model/tenants.model');
 const Building = require('../model/building.model')
 const Property = require('../model/properties.model')
+const Payment = require('../model/payments.model')
 const createTenant = async (tenantData) => {
   try {
     // Create the tenant using the provided data
@@ -277,19 +278,35 @@ const getTenantsDueForRenewal = async () => {
 // Create a new payment for a tenant
 const addPayment = async (tenantId, paymentData) => {
   try {
+    // Check if tenant exists
     const tenant = await Tenant.findById(tenantId);
     if (!tenant) {
       throw new Error('Tenant not found');
     }
-    
-    tenant.paymentHistory.push(paymentData); // Add new payment to tenant's payment history
-    await tenant.save();
-    
-    return tenant;
+
+    // Create new payment associated with the tenant
+    const payment = new Payment({
+      tenantId,
+      amount: paymentData.amount,
+      date: paymentData.date || new Date(),
+      method: paymentData.method,
+      status: paymentData.status || 'completed',
+      description: paymentData.description
+    });
+    tenant.paymentHistory.push(paymentData);
+
+    if (paymentData.status === 'completed') {
+      tenant.totalDue -= paymentData.amount;
+      tenant.totalDue = Math.max(tenant.totalDue, 0);
+    }
+
+    await payment.save();
+    return payment;
   } catch (error) {
     throw new Error(`Error creating payment: ${error.message}`);
   }
 };
+
 // Check outstanding balance for a tenant
 const checkOutstandingBalance = async (tenantId) => {
   try {
@@ -297,7 +314,7 @@ const checkOutstandingBalance = async (tenantId) => {
     if (!tenant) {
       throw new Error('Tenant not found');
       }
-    const totalRentDue = tenant.rentAmount
+    const totalRentDue = tenant.totalDue
     const totalPaid = await calculateTotalRentPaid(tenantId);
     const balanceDue = totalRentDue - totalPaid;
     return balanceDue;
@@ -308,12 +325,12 @@ const checkOutstandingBalance = async (tenantId) => {
 // Get tenants with outstanding payments
 const getTenantsWithOutstandingPayments = async () => {
   try {
-    const tenants = await Tenant.find({
-      "paymentHistory.status": { $ne: "paid" }
-    }).populate('apartmentId');
-    return tenants;
+    const tenantsWithBalance = await Tenant.find({ totalDue: { $gt: 0 } })
+      .select('fullName email totalDue')
+      .exec();
+    return tenantsWithBalance;
   } catch (error) {
-    throw new Error(`Error retrieving tenants with outstanding payments: ${error.message}`);
+    throw new Error(`Error fetching tenants with outstanding balances: ${error.message}`);
   }
 };
 
@@ -327,6 +344,51 @@ const getTenantsDueForPaymentToday = async () => {
     throw new Error(`Error retrieving tenants due for payment today: ${error.message}`);
   }
 };
+
+// For Cron Jobs
+// Accrue Monthly rents
+// Notifications for Past Due Balances
+
+
+const accrueMonthlyRent = async () => {
+  try {
+    const today = new Date();
+    const day = today.getDate();
+
+    const tenantsDue = await Tenant.find({
+      status: 'active',
+      rentDueDate: day
+    });
+
+    tenantsDue.forEach(async (tenant) => {
+      tenant.totalDue += tenant.rentAmount;
+      await tenant.save();
+    });
+
+    return tenantsDue.length;
+  } catch (error) {
+    console.error(`Error accruing monthly rent: ${error.message}`);
+  }
+};
+const sendPaymentReminders = async () => {
+  try {
+    const today = new Date();
+    const overdueTenants = await Tenant.find({
+      totalDue: { $gt: 0 },
+      rentDueDate: { $lt: today.getDate() },
+    }).select('fullName email totalDue rentDueDate');
+
+    overdueTenants.forEach((tenant) => {
+      // Code to send reminder email or SMS
+      console.log(`Reminder sent to ${tenant.fullName} with overdue balance of ${tenant.totalDue}`);
+    });
+
+    return overdueTenants.length;
+  } catch (error) {
+    throw new Error(`Error sending payment reminders: ${error.message}`);
+  }
+};
+
 
 module.exports = {
   createTenant,
@@ -348,4 +410,6 @@ module.exports = {
   checkOutstandingBalance,
   getTenantsWithOutstandingPayments,
   getTenantsDueForPaymentToday,
+  accrueMonthlyRent,
+  sendPaymentReminders
 };
